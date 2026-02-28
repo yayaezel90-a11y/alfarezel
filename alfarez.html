@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ALFAREZEL • Welcome</title>
+    <!-- Font Awesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* RESET TOTAL */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box !important;
+        }
+
+        html, body {
+            height: 100% !important;
+            width: 100% !important;
+            overflow-x: hidden !important;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #0a0a0f;
+            color: white;
+            min-height: 100% !important;
+            height: auto !important;
+            display: block !important;
+            position: relative;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            cursor: none;
+            padding: 0 !important;
+        }
+
+        /* Trail Canvas */
+        #trail-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9998;
+        }
+
+        /* Custom Cursor */
+        .cursor-main {
+            width: 32px;
+            height: 32px;
+            border: 2px solid rgba(255, 215, 0, 0.9);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            transform: translate(-50%, -50%);
+            backdrop-filter: blur(4px);
+            background: rgba(255, 215, 0, 0.1);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            transition: width 0.2s, height 0.2s;
+            will-change: left, top;
+        }
+
+        .cursor-dot {
+            width: 6px;
+            height: 6px;
+            background: #ffd700;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 10001;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px #ffaa00;
+            will-change: left, top;
+        }
+
+        /* Background Particles */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* WRAPPER BUAT ISI */
+        .page-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            min-height: 100% !important;
+            height: auto !important;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 0 !important;
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 600px;
+            padding: 2rem 1.5rem;
+            background: rgba(10, 10, 20, 0.3);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            border-radius: 50px;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8);
+            text-align: center;
+            margin: 20px auto !important;
+        }
+
+        /* WELCOME TEXT - BESAR & MEWAH */
+        .welcome-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 5rem;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff, #ffd700, #ffaa00, #fff);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: welcomeShine 6s linear infinite;
+            text-shadow: 0 0 30px rgba(255,215,0,0.5);
+            letter-spacing: 5px;
+        }
+        
+        @keyframes welcomeShine {
+            0% { background-position: 0% center; }
+            50% { background-position: 200% center; }
+            100% { background-position: 400% center; }
+        }
+        
+        .welcome-sub {
+            font-size: 1.2rem;
+            color: rgba(255,215,0,0.7);
+            margin-bottom: 2rem;
+            font-weight: 300;
+            letter-spacing: 3px;
+        }
+
+        /* Profile */
+        .profile {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffd700, #b8860b);
+            padding: 4px;
+            margin: 0 auto 1rem;
+            box-shadow: 0 10px 40px rgba(255, 215, 0, 0.6);
+            animation: glowPulse 3s infinite alternate;
+            transition: transform 0.2s;
+            cursor: none;
+        }
+        
+        .avatar:active {
+            transform: scale(0.95);
+        }
+        
+        @keyframes glowPulse {
+            0% { box-shadow: 0 10px 40px rgba(255, 215, 0, 0.4); }
+            100% { box-shadow: 0 20px 60px rgba(255, 215, 0, 0.9); }
+        }
+        
+        .avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            color: #ffd700;
+            pointer-events: none;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #fff, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        
+        .bio { color: rgba(255, 255, 255, 0.7); }
+
+        /* Links */
+        .links { display: flex; flex-direction: column; gap: 1.2rem; margin: 2rem 0; }
+        .link-card {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.2rem 2rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 215, 0, 0.15);
+            border-radius: 50px;
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+            overflow: hidden;
+        }
+        .link-card:hover {
+            transform: scale(1.05);
+            border-color: #ffd700;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.4);
+            background: rgba(255, 215, 0, 0.1);
+        }
+        .link-card i { font-size: 1.8rem; width: 30px; }
+        .link-card span { flex: 1; margin-left: 20px; text-align: left; }
+        .arrow { opacity: 0; transition: 0.3s; }
+        .link-card:hover .arrow { opacity: 1; transform: translateX(0); }
+        
+        /* Warna Icon */
+        .wa i { color: #25D366; }
+        .tiktok1 i, .tiktok2 i { color: #00f2ea; }
+        .ig i { color: #e4405f; }
+        .sosialbuz i { color: #4caf50; }
+    </style>
+</head>
+<body>
+
+    <canvas id="trail-canvas"></canvas>
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="cursor-main" id="cursorMain"></div>
+    <div class="cursor-dot" id="cursorDot"></div>
+
+    <!-- WRAPPER BUAT ISI -->
+    <div class="page-wrapper">
+        <!-- Main Container -->
+        <div class="container">
+            <!-- WELCOME TEXT BESAR -->
+            <div class="welcome-text">WELCOME</div>
+            <div class="welcome-sub">TO ALFAREZEL SPACE</div>
+            
+            <!-- Profile -->
+            <div class="profile">
+                <div class="avatar">
+                    <div class="avatar-placeholder">A</div>
+                </div>
+                <h1>ALFAREZEL</h1>
+                <div class="bio">@alfarezel_real • content creator</div>
+            </div>
+
+            <div class="links">
+                <a href="#" class="link-card wa" target="_blank"><i class="fab fa-whatsapp"></i><span>WhatsApp</span><i class="fas fa-chevron-right arrow"></i></a>
+                <a href="#" class="link-card tiktok1" target="_blank"><i class="fab fa-tiktok"></i><span>TikTok • @zelllkedua</span><i class="fas fa-chevron-right arrow"></i></a>
+                <a href="#" class="link-card tiktok2" target="_blank"><i class="fab fa-tiktok"></i><span>TikTok • @somehomiezell</span><i class="fas fa-chevron-right arrow"></i></a>
+                <a href="#" class="link-card ig" target="_blank"><i class="fab fa-instagram"></i><span>Instagram</span><i class="fas fa-chevron-right arrow"></i></a>
+                <a href="#" class="link-card sosialbuz" target="_blank"><i class="fas fa-bullhorn"></i><span>Sosial Buzz</span><i class="fas fa-chevron-right arrow"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CURSOR LOGIC ====================
+        (function initCursor() {
+            const cursorMain = document.getElementById('cursorMain');
+            const cursorDot = document.getElementById('cursorDot');
+            const trailCanvas = document.getElementById('trail-canvas');
+            
+            if (!cursorMain || !cursorDot || !trailCanvas) return;
+            
+            const ctxTrail = trailCanvas.getContext('2d');
+            let mouseX = 0, mouseY = 0;
+            let mainX = 0, mainY = 0;
+            let trailPoints = [];
+            const maxTrailLength = 15;
+
+            function resizeTrailCanvas() {
+                trailCanvas.width = window.innerWidth;
+                trailCanvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resizeTrailCanvas);
+            resizeTrailCanvas();
+
+            function updateCursorPosition(x, y) {
+                mouseX = x;
+                mouseY = y;
+                cursorDot.style.left = mouseX + 'px';
+                cursorDot.style.top = mouseY + 'px';
+                trailPoints.push({ x: mouseX, y: mouseY });
+                if (trailPoints.length > maxTrailLength) trailPoints.shift();
+            }
+
+            document.addEventListener('mousemove', (e) => updateCursorPosition(e.clientX, e.clientY));
+            document.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (e.touches.length > 0) {
+                    updateCursorPosition(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: false });
+            document.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 0) {
+                    updateCursorPosition(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            });
+
+            function animateCursor() {
+                mainX += (mouseX - mainX) * 0.2;
+                mainY += (mouseY - mainY) * 0.2;
+                cursorMain.style.left = mainX + 'px';
+                cursorMain.style.top = mainY + 'px';
+                
+                ctxTrail.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+                for (let i = 0; i < trailPoints.length; i++) {
+                    const p = trailPoints[i];
+                    const alpha = (i + 1) / trailPoints.length * 0.5;
+                    const size = 4 * (i / trailPoints.length);
+                    ctxTrail.beginPath();
+                    ctxTrail.arc(p.x, p.y, size, 0, Math.PI*2);
+                    ctxTrail.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+                    ctxTrail.fill();
+                }
+                requestAnimationFrame(animateCursor);
+            }
+            animateCursor();
+        })();
+
+        // ==================== BACKGROUND PARTICLES ====================
+        (function initParticles() {
+            const canvas = document.getElementById('particle-canvas');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            let width, height, particles = [];
+            
+            function initParticles() {
+                particles = [];
+                for (let i = 0; i < 80; i++) {
+                    particles.push({
+                        x: Math.random() * width, 
+                        y: Math.random() * height,
+                        radius: Math.random() * 2 + 1,
+                        speedX: (Math.random() - 0.5) * 0.2,
+                        speedY: (Math.random() - 0.5) * 0.2,
+                        color: `rgba(255, 215, 0, ${Math.random() * 0.3 + 0.2})`
+                    });
+                }
+            }
+            
+            function resizeCanvas() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+                initParticles();
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            
+            function drawParticles() {
+                ctx.clearRect(0, 0, width, height);
+                particles.forEach(p => {
+                    p.x += p.speedX; 
+                    p.y += p.speedY;
+                    if (p.x < 0) p.x = width; 
+                    if (p.x > width) p.x = 0;
+                    if (p.y < 0) p.y = height; 
+                    if (p.y > height) p.y = 0;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                });
+                requestAnimationFrame(drawParticles);
+            }
+            drawParticles();
+        })();
+
+        // ==================== SET LINK ====================
+        setTimeout(() => {
+            try {
+                document.querySelector('.wa').href = "https://wa.me/qr/LVIW2O6ZAOAVC1";
+                document.querySelector('.tiktok1').href = "https://www.tiktok.com/@zelllkedua?_r=1&_t=ZS-94IcqOrI9DA";
+                document.querySelector('.tiktok2').href = "https://www.tiktok.com/@somehomiezell?_r=1&_t=ZS-94Icy6ePV2a";
+                document.querySelector('.ig').href = "https://www.instagram.com/zlzlzzlzell?igsh=MXZrZGJnejdmcjIzag==";
+                document.querySelector('.sosialbuz').href = "https://sociabuzz.com/alfarezel_ezel";
+            } catch (e) {}
+        }, 500);
+    </script>
+</body>
+</html>
