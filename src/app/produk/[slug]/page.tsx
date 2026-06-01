@@ -54,7 +54,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             <h1 className="text-2xl font-black leading-tight text-slate-950 sm:text-3xl">{product.title}</h1>
             <p className="mt-4 text-3xl font-black text-slate-950">{formatIDR(product.price)}</p>
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <Info label="Rank / level" value={`${product.rank} · ${product.level}`} />
+              <Info label="Rank / level" value={`${product.rank} / ${product.level}`} />
               <Info label="Server" value={product.server} />
               <Info label="Platform" value={product.platform} />
               <Info label="Bind akun" value={product.bind} />
@@ -68,7 +68,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
               <PurchaseModal product={product} />
-              <Link href={`/chat/ORDER-20260601-DEMO`} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-sm font-black text-slate-700 hover:border-blue-200 hover:text-blue-700">
+              <Link href={`/chat/seller-${product.sellerSlug}`} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-sm font-black text-slate-700 hover:border-blue-200 hover:text-blue-700">
                 <MessageCircle className="h-4 w-4" />
                 Chat
               </Link>
@@ -93,7 +93,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 </div>
                 <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
                   <Star className="h-4 w-4 fill-orange-400 text-orange-400" />
-                  {product.rating} · {product.sold} produk terjual
+                  {product.rating} / {product.sold} produk terjual
                 </div>
               </div>
               <Store className="h-6 w-6 text-slate-400" />

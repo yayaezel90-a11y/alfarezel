@@ -33,7 +33,7 @@ export function DashboardShell({ title, subtitle, roleLabel, nav, children }: Da
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-5 pb-24 sm:px-6 lg:grid-cols-[280px_1fr] lg:px-8">
-        <aside className="hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm lg:block">
+        <aside className="hidden max-h-[calc(100vh-96px)] overflow-y-auto rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-20 lg:block">
           <Link href="/" className="mb-6 flex items-center gap-3 rounded-2xl bg-slate-950 p-3 text-white">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-sm font-black text-slate-950">AM</div>
             <div>
@@ -134,26 +134,48 @@ export const buyerNav = [
   { label: "Ringkasan", href: "/dashboard/buyer", icon: "Home" as const, active: true },
   { label: "Saldo & Top Up", href: "/top-up", icon: "Wallet" as const },
   { label: "Pesanan", href: "/dashboard/buyer#orders", icon: "ShoppingBag" as const },
-  { label: "Chat Transaksi", href: "/chat/ORDER-20260601-DEMO", icon: "MessageCircle" as const },
+  { label: "Chat Bantuan", href: "/chat/support", icon: "MessageCircle" as const },
   { label: "Report", href: "/report", icon: "Flag" as const },
-  { label: "Invoice", href: "/invoice/ORDER-20260601-DEMO", icon: "FileText" as const },
+  { label: "Invoice", href: "/dashboard/buyer#orders", icon: "FileText" as const },
 ];
 
 export const sellerNav = [
   { label: "Ringkasan", href: "/dashboard/seller", icon: "Home" as const, active: true },
   { label: "Produk", href: "/dashboard/seller#products", icon: "Package" as const },
   { label: "Pesanan Masuk", href: "/dashboard/seller#orders", icon: "ShoppingBag" as const },
-  { label: "Chat Buyer", href: "/chat/ORDER-20260601-DEMO", icon: "MessageCircle" as const },
+  { label: "Chat Support", href: "/chat/support", icon: "MessageCircle" as const },
   { label: "Withdraw", href: "/withdraw", icon: "Wallet" as const },
   { label: "Toko", href: "/seller/reza-store-id", icon: "Store" as const },
 ];
 
-export const adminNav = [
-  { label: "Overview", href: "/dashboard/admin", icon: "BarChart3" as const, active: true },
-  { label: "User Management", href: "/dashboard/admin#users", icon: "Users" as const },
-  { label: "Seller Management", href: "/dashboard/admin#sellers", icon: "Store" as const },
-  { label: "Product Management", href: "/dashboard/admin#products", icon: "Package" as const },
-  { label: "Report & Dispute", href: "/dashboard/admin#reports", icon: "Flag" as const },
-  { label: "Fee Settings", href: "/dashboard/admin#fees", icon: "Settings" as const },
-  { label: "Security Center", href: "/dashboard/admin#security", icon: "ShieldCheck" as const },
+const adminBaseNav = [
+  { label: "Overview", slug: "", icon: "BarChart3" as const },
+  { label: "User Management", slug: "users", icon: "Users" as const },
+  { label: "Seller Management", slug: "sellers", icon: "Store" as const },
+  { label: "Product Management", slug: "products", icon: "Package" as const },
+  { label: "Order Management", slug: "orders", icon: "ShoppingBag" as const },
+  { label: "Top Up Management", slug: "topups", icon: "Wallet" as const },
+  { label: "Withdraw Management", slug: "withdraws", icon: "Wallet" as const },
+  { label: "Wallet Management", slug: "wallets", icon: "Wallet" as const },
+  { label: "Report & Dispute", slug: "reports", icon: "Flag" as const },
+  { label: "Chat Monitoring", slug: "chats", icon: "MessageCircle" as const },
+  { label: "Game Categories", slug: "games", icon: "Package" as const },
+  { label: "Banner & Promotion", slug: "banners", icon: "Bell" as const },
+  { label: "Voucher Management", slug: "vouchers", icon: "FileText" as const },
+  { label: "Fee Settings", slug: "fees", icon: "Settings" as const },
+  { label: "Platform Settings", slug: "settings", icon: "Settings" as const },
+  { label: "Admin Logs", slug: "logs", icon: "FileText" as const },
+  { label: "Security Center", slug: "security", icon: "ShieldCheck" as const },
+  { label: "CMS Pages", slug: "cms", icon: "FileText" as const },
+  { label: "Notification Center", slug: "notifications", icon: "Bell" as const },
+  { label: "Backup / Export", slug: "backup", icon: "FileText" as const },
 ];
+
+export function adminNav(activeSlug = "") {
+  return adminBaseNav.map((item) => ({
+    label: item.label,
+    href: item.slug ? `/dashboard/admin/${item.slug}` : "/dashboard/admin",
+    icon: item.icon,
+    active: item.slug === activeSlug,
+  }));
+}

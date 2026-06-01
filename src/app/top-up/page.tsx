@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CreditCard, Wallet } from "lucide-react";
 import { Badge } from "@/components/badge";
+import { BackLink } from "@/components/back-link";
 import { TopupForm } from "@/components/flow-forms";
 import { adminNumber } from "@/lib/demo-data";
 import { formatIDR } from "@/lib/invoice";
@@ -16,6 +17,9 @@ export default function TopUpPage() {
   return (
     <main className="mx-auto grid max-w-7xl gap-6 px-4 py-8 pb-24 sm:px-6 lg:grid-cols-[1fr_420px] lg:px-8">
       <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-5">
+          <BackLink href="/dashboard/buyer" label="Kembali ke dashboard" />
+        </div>
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white">
             <Wallet className="h-6 w-6" />

@@ -26,6 +26,7 @@ export function RealtimeChat({ orderId, initialMessages }: RealtimeChatProps) {
   const [body, setBody] = useState("");
   const [status, setStatus] = useState("Menghubungkan realtime...");
   const [error, setError] = useState("");
+  const [joined, setJoined] = useState(false);
 
   useEffect(() => {
     const client = io({
@@ -39,12 +40,16 @@ export function RealtimeChat({ orderId, initialMessages }: RealtimeChatProps) {
       client.emit("chat:join", { orderRef: orderId }, (response: { ok: boolean; error?: string }) => {
         if (!response.ok) {
           setError(response.error ?? "Gagal join chat realtime.");
+          setJoined(false);
+        } else {
+          setJoined(true);
         }
       });
     });
 
     client.on("connect_error", () => {
       setStatus("Realtime belum aktif. Pesan tetap bisa dikirim lewat API.");
+      setJoined(false);
     });
 
     client.on("chat:message", (message: ChatMessage) => {
@@ -70,7 +75,7 @@ export function RealtimeChat({ orderId, initialMessages }: RealtimeChatProps) {
     setError("");
 
     const activeSocket = socketRef.current;
-    if (activeSocket?.connected) {
+    if (activeSocket?.connected && joined) {
       activeSocket.emit("chat:send", { orderRef: orderId, body, attachments: [] }, (response: { ok: boolean; error?: string }) => {
         if (!response.ok) {
           setError(response.error ?? "Pesan gagal dikirim.");
@@ -91,6 +96,8 @@ export function RealtimeChat({ orderId, initialMessages }: RealtimeChatProps) {
       if (!response.ok) throw new Error(data.error ?? "Pesan gagal dikirim.");
       setMessages((current) => [...current, data.message]);
       setBody("");
+      setError("");
+      setStatus(joined ? "Realtime aktif" : "Pesan terkirim lewat API. Realtime akan aktif saat room tersedia.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Pesan gagal dikirim.");
     }

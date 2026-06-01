@@ -334,7 +334,7 @@ async function main() {
 
   const buyerPassword = await bcrypt.hash("buyer12345", 12);
   const existingBuyer = await prisma.user.findFirst({
-    where: { OR: [{ username: "buyer.demo" }, { username: "reza.buyer" }, { email: "buyer@alfarez.com" }] },
+    where: { OR: [{ username: "reza.buyer" }, { email: "buyer@alfarez.com" }] },
   });
   const buyer = existingBuyer ? await prisma.user.update({
     where: { id: existingBuyer.id },

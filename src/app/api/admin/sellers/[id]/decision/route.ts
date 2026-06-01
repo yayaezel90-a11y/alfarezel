@@ -16,8 +16,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { id } = await params;
     const input = await parseJson(request, decisionSchema);
     if (isFirebaseBackend()) {
-      const status = input.decision === "approve" || input.decision === "verify" ? "APPROVED" : "REJECTED";
-      await firebaseSellerDecision(admin, id, status, input.note);
+      await firebaseSellerDecision(admin, id, input.decision, input.note);
       return ok({ message: "Status seller berhasil diperbarui." });
     }
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Banknote, Wallet } from "lucide-react";
 import { Badge } from "@/components/badge";
+import { BackLink } from "@/components/back-link";
 import { WithdrawForm } from "@/components/flow-forms";
 import { formatIDR } from "@/lib/invoice";
 
@@ -15,6 +16,9 @@ export default function WithdrawPage() {
   return (
     <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 pb-24 sm:px-6 lg:grid-cols-[1fr_380px] lg:px-8">
       <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-5">
+          <BackLink href="/dashboard/seller" label="Kembali ke dashboard seller" />
+        </div>
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white">
             <Banknote className="h-6 w-6" />

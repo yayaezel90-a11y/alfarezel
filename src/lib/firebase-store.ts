@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 import type { UserRole } from "@prisma/client";
 import { firebaseDb } from "./firebase-admin";
-import { games as demoGames, products as demoProducts, sellers as demoSellers } from "./demo-data";
+import { games as seedGames, products as seedProducts, sellers as seedSellers } from "./demo-data";
 import { createInvoice, slugify } from "./invoice";
 import { hashPassword } from "./password";
 
@@ -60,16 +60,17 @@ type OrderDoc = {
   invoiceId: string;
   buyerId: string;
   sellerId: string;
-  productId: string;
-  productTitle: string;
+  productId?: string;
+  productTitle?: string;
   productPrice: number;
-  platformFee: number;
+  platformFee?: number;
   totalPaid: number;
   status: string;
   escrowStatus: string;
   chatId: string;
   createdAt: string;
   completedAt?: string;
+  roomType?: "ORDER" | "SUPPORT" | "SELLER";
 };
 
 const suspiciousWords = ["transfer langsung", "di luar web", "wa aja bayar langsung", "bayar langsung", "luar platform"];
@@ -511,6 +512,10 @@ export async function firebaseCreateOrderWithEscrow(user: SessionLike, input: { 
 }
 
 export async function firebaseFindOrderForUser(orderRef: string, user: SessionLike) {
+  if (orderRef === "support" || orderRef.startsWith("seller-")) {
+    return firebaseFindRoomForUser(orderRef, user);
+  }
+
   const byId = await firebaseDb().collection("orders").doc(orderRef).get();
   const snapshot = byId.exists
     ? byId
@@ -519,6 +524,77 @@ export async function firebaseFindOrderForUser(orderRef: string, user: SessionLi
   const order = { id: snapshot.id, ...snapshot.data() } as OrderDoc;
   if (!isAdmin(user.role) && order.buyerId !== user.id && order.sellerId !== user.id) return null;
   return order;
+}
+
+async function firebaseFindRoomForUser(roomRef: string, user: SessionLike): Promise<OrderDoc> {
+  const db = firebaseDb();
+  const createdAt = now();
+
+  if (roomRef === "support") {
+    const roomId = isAdmin(user.role) ? "support-admin" : `support-${user.id}`;
+    await db.collection("order_chats").doc(roomId).set(
+      {
+        id: roomId,
+        orderId: roomId,
+        roomType: "SUPPORT",
+        title: "Bantuan admin",
+        isLocked: false,
+        createdAt,
+        updatedAt: createdAt,
+      },
+      { merge: true },
+    );
+    return {
+      id: roomId,
+      invoiceId: "SUPPORT",
+      buyerId: user.id,
+      sellerId: "admin",
+      productPrice: 0,
+      totalPaid: 0,
+      status: "ACTIVE",
+      escrowStatus: "NONE",
+      chatId: roomId,
+      createdAt,
+      roomType: "SUPPORT",
+    };
+  }
+
+  const slug = roomRef.replace(/^seller-/, "");
+  const sellerSnap = await db.collection("seller_profiles").where("slug", "==", slug).limit(1).get();
+  const seller = sellerSnap.docs[0];
+  if (!seller) throw new Error("Seller tidak ditemukan.");
+  const sellerData = seller.data() as { userId?: string; storeName?: string };
+  const sellerId = sellerData.userId ?? seller.id;
+  const participantKey = user.id === sellerId ? "seller" : user.id;
+  const roomId = `seller-${slug}-${participantKey}`;
+  if (!isAdmin(user.role) && user.id !== sellerId && participantKey !== user.id) throw new Response("Forbidden", { status: 403 });
+  await db.collection("order_chats").doc(roomId).set(
+    {
+      id: roomId,
+      orderId: roomId,
+      roomType: "SELLER",
+      sellerId,
+      buyerId: user.id === sellerId ? null : user.id,
+      title: sellerData.storeName ?? "Chat seller",
+      isLocked: false,
+      createdAt,
+      updatedAt: createdAt,
+    },
+    { merge: true },
+  );
+  return {
+    id: roomId,
+    invoiceId: roomId.toUpperCase(),
+    buyerId: user.id === sellerId ? "buyer" : user.id,
+    sellerId,
+    productPrice: 0,
+    totalPaid: 0,
+    status: "ACTIVE",
+    escrowStatus: "NONE",
+    chatId: roomId,
+    createdAt,
+    roomType: "SELLER",
+  };
 }
 
 export async function firebaseListOrders(user: SessionLike) {
@@ -537,7 +613,16 @@ export async function firebaseListChatMessages(orderRef: string, user: SessionLi
   if (!order) throw new Error("Chat transaksi tidak ditemukan.");
   const messages = await firebaseDb().collection("chat_messages").where("orderId", "==", order.id).get();
   return messages.docs
-    .map((doc) => ({ id: doc.id, ...doc.data() }) as { id: string; createdAt?: string })
+    .map(
+      (doc) =>
+        ({ id: doc.id, ...doc.data() }) as {
+          id: string;
+          type?: string;
+          body?: string;
+          createdAt?: string;
+          sender?: { username?: string; role?: string } | null;
+        },
+    )
     .sort((a, b) => String(a.createdAt ?? "").localeCompare(String(b.createdAt ?? "")));
 }
 
@@ -578,6 +663,44 @@ export async function firebaseCreateChatMessage(orderRef: string, user: SessionL
     });
   }
   return { id: messageRef.id, ...message, warning };
+}
+
+export async function firebaseUpdateUserAvatar(user: SessionLike, avatarUrl: string) {
+  await firebaseDb().collection("users").doc(user.id).set({ avatar: avatarUrl, updatedAt: now() }, { merge: true });
+  if (user.role === "SELLER") {
+    await firebaseDb().collection("seller_profiles").doc(user.id).set({ avatar: avatarUrl, updatedAt: now() }, { merge: true });
+  }
+}
+
+export async function firebaseUpdateSellerPhoto(user: SessionLike, input: { storeBanner?: string; storeAvatar?: string }) {
+  await firebaseDb().collection("seller_profiles").doc(user.id).set(
+    {
+      avatar: input.storeAvatar ?? undefined,
+      banner: input.storeBanner ?? undefined,
+      updatedAt: now(),
+    },
+    { merge: true },
+  );
+}
+
+export async function firebaseUpdatePlatformVisuals(admin: SessionLike, input: { dashboardImage?: string; logoUrl?: string }) {
+  await firebaseDb().collection("platform_settings").doc("visuals").set(
+    {
+      key: "visuals",
+      dashboardImage: input.dashboardImage ?? null,
+      logoUrl: input.logoUrl ?? null,
+      updatedBy: admin.id,
+      updatedAt: now(),
+    },
+    { merge: true },
+  );
+  await firebaseDb().collection("admin_logs").add({
+    actorId: admin.id,
+    action: "UPDATE_PLATFORM_VISUALS",
+    entity: "platform_settings",
+    entityId: "visuals",
+    createdAt: now(),
+  });
 }
 
 export async function firebaseConfirmOrder(user: SessionLike, orderId: string) {
@@ -779,9 +902,34 @@ export async function firebaseApplySeller(user: SessionLike, input: Record<strin
   return profile;
 }
 
-export async function firebaseSellerDecision(admin: SessionLike, sellerId: string, status: "APPROVED" | "REJECTED", adminNote?: string) {
-  await firebaseDb().collection("seller_profiles").doc(sellerId).set({ status, adminNote: adminNote ?? null, reviewedBy: admin.id, reviewedAt: now(), updatedAt: now() }, { merge: true });
-  if (status === "APPROVED") await firebaseDb().collection("users").doc(sellerId).update({ role: "SELLER", updatedAt: now() });
+export async function firebaseSellerDecision(
+  admin: SessionLike,
+  sellerId: string,
+  decision: "approve" | "reject" | "verify" | "unverify" | "suspend",
+  adminNote?: string,
+) {
+  const status = decision === "approve" || decision === "verify" || decision === "unverify" ? "APPROVED" : decision === "suspend" ? "SUSPENDED" : "REJECTED";
+  await firebaseDb().collection("seller_profiles").doc(sellerId).set(
+    {
+      status,
+      isVerified: decision === "verify" ? true : decision === "unverify" ? false : undefined,
+      adminNote: adminNote ?? null,
+      reviewedBy: admin.id,
+      reviewedAt: now(),
+      updatedAt: now(),
+    },
+    { merge: true },
+  );
+  if (decision === "approve" || decision === "verify") await firebaseDb().collection("users").doc(sellerId).update({ role: "SELLER", status: "ACTIVE", updatedAt: now() });
+  if (decision === "suspend") await firebaseDb().collection("users").doc(sellerId).update({ status: "SUSPENDED", updatedAt: now() });
+  await firebaseDb().collection("admin_logs").add({
+    actorId: admin.id,
+    action: `SELLER_${decision.toUpperCase()}`,
+    entity: "seller_profiles",
+    entityId: sellerId,
+    metadata: { note: adminNote ?? null },
+    createdAt: now(),
+  });
 }
 
 export async function firebaseAdjustWallet(admin: SessionLike, userId: string, amount: number, reason: string) {
@@ -852,12 +1000,82 @@ export async function firebaseListReports(user: SessionLike) {
 }
 
 export async function firebaseResolveReport(admin: SessionLike, reportId: string, input: { resolution: string; decision: "REFUND_BUYER" | "RELEASE_SELLER" | "CLOSE_ONLY" }) {
+  const report = await firebaseDb().collection("reports").doc(reportId).get();
+  if (!report.exists) throw new Error("Report tidak ditemukan.");
+  const data = report.data() as { orderId?: string | null };
+  if (data.orderId && input.decision === "REFUND_BUYER") {
+    await firebaseRefundOrder(admin, data.orderId, input.resolution);
+  }
+  if (data.orderId && input.decision === "RELEASE_SELLER") {
+    await firebaseConfirmOrder(admin, data.orderId);
+  }
   await firebaseDb().collection("reports").doc(reportId).update({
     status: "RESOLVED",
     resolution: input.resolution,
     resolvedBy: admin.id,
     closedAt: now(),
   });
+  await firebaseDb().collection("admin_logs").add({
+    actorId: admin.id,
+    action: "RESOLVE_REPORT",
+    entity: "reports",
+    entityId: reportId,
+    metadata: input,
+    createdAt: now(),
+  });
+}
+
+export async function firebaseAdminCollection(collection: string, limit = 80) {
+  const allowed = new Set([
+    "users",
+    "seller_profiles",
+    "products",
+    "orders",
+    "topup_requests",
+    "withdraw_requests",
+    "wallets",
+    "wallet_transactions",
+    "reports",
+    "order_chats",
+    "games",
+    "banners",
+    "vouchers",
+    "fee_settings",
+    "platform_settings",
+    "admin_logs",
+    "login_logs",
+    "security_flags",
+    "notifications",
+  ]);
+  if (!allowed.has(collection)) throw new Error("Collection admin tidak valid.");
+  return sortNewest(await allDocs<Record<string, unknown>>(collection)).slice(0, limit);
+}
+
+export async function firebaseUpdateFeeSetting(admin: SessionLike, input: {
+  kind: "TOPUP" | "WITHDRAW" | "PLATFORM";
+  percentage: number;
+  fixedFee: number;
+  minAmount?: number;
+  maxAmount?: number;
+}) {
+  await firebaseDb().collection("fee_settings").doc(input.kind).set({ ...input, isActive: true, updatedBy: admin.id, updatedAt: now() }, { merge: true });
+  await firebaseDb().collection("admin_logs").add({ actorId: admin.id, action: "UPDATE_FEE", entity: "fee_settings", entityId: input.kind, metadata: input, createdAt: now() });
+}
+
+export async function firebaseUpdatePlatformSetting(admin: SessionLike, input: { key: string; value: string }) {
+  await firebaseDb().collection("platform_settings").doc(input.key).set({ key: input.key, value: input.value, updatedBy: admin.id, updatedAt: now() }, { merge: true });
+  await firebaseDb().collection("admin_logs").add({ actorId: admin.id, action: "UPDATE_PLATFORM_SETTING", entity: "platform_settings", entityId: input.key, metadata: input, createdAt: now() });
+}
+
+export async function firebaseCreateGameCategory(admin: SessionLike, input: { name: string; slug: string; description?: string; icon?: string; banner?: string }) {
+  await firebaseDb().collection("games").doc(input.slug).set({ ...input, id: input.slug, updatedBy: admin.id, updatedAt: now(), createdAt: now() }, { merge: true });
+  await firebaseDb().collection("admin_logs").add({ actorId: admin.id, action: "UPSERT_GAME", entity: "games", entityId: input.slug, metadata: input, createdAt: now() });
+}
+
+export async function firebaseCreateAdminDocument(admin: SessionLike, collection: "banners" | "vouchers" | "notifications", input: Record<string, unknown>) {
+  const ref = await firebaseDb().collection(collection).add({ ...input, createdBy: admin.id, status: input.status ?? "ACTIVE", createdAt: now(), updatedAt: now() });
+  await firebaseDb().collection("admin_logs").add({ actorId: admin.id, action: `CREATE_${collection.toUpperCase()}`, entity: collection, entityId: ref.id, metadata: input, createdAt: now() });
+  return { id: ref.id, ...input };
 }
 
 export async function firebaseAdminOverview() {
@@ -965,12 +1183,12 @@ export async function firebaseSeed() {
   await db.collection("fee_settings").doc("WITHDRAW").set({ kind: "WITHDRAW", percentage: 1, fixedFee: 1500, minAmount: 25000, maxAmount: 5000000, isActive: true, updatedAt: createdAt });
   await db.collection("fee_settings").doc("PLATFORM").set({ kind: "PLATFORM", percentage: 3, fixedFee: 0, minAmount: 0, maxAmount: 0, isActive: true, updatedAt: createdAt });
 
-  for (const game of demoGames) {
+  for (const game of seedGames) {
     await db.collection("games").doc(game.slug).set({ ...game, id: game.slug, createdAt, updatedAt: createdAt }, { merge: true });
   }
 
   const sellerIds: string[] = [];
-  for (const seller of demoSellers.slice(0, 3)) {
+  for (const seller of seedSellers.slice(0, 3)) {
     const email = `${seller.slug}@alfarez.local`;
     const userRef = db.collection("users").doc(`seller-${seller.slug}`);
     sellerIds.push(userRef.id);
@@ -1004,7 +1222,7 @@ export async function firebaseSeed() {
     }, { merge: true });
   }
 
-  for (const [index, product] of demoProducts.entries()) {
+  for (const [index, product] of seedProducts.entries()) {
     const sellerId = sellerIds[index % sellerIds.length] ?? adminRef.id;
     const sellerProfile = await db.collection("seller_profiles").doc(sellerId).get();
     await db.collection("products").doc(product.slug).set({
@@ -1039,7 +1257,7 @@ export async function firebaseSeed() {
     actorId: adminRef.id,
     action: "FIREBASE_SEED",
     entity: "system",
-    metadata: { products: demoProducts.length, games: demoGames.length },
+    metadata: { products: seedProducts.length, games: seedGames.length },
     createdAt,
   });
 }

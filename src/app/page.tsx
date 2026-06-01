@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, CreditCard, MessageCircle, Search, ShieldCheck, Store, Wallet } from "lucide-react";
+import { ArrowRight, CheckCircle2, CreditCard, MessageCircle, Search, ShieldCheck, Store } from "lucide-react";
 import { Badge } from "@/components/badge";
 import { ProductCard } from "@/components/product-card";
 import { ProductVisual } from "@/components/product-visual";
 import { Reveal } from "@/components/reveal";
 import { SectionHeading } from "@/components/section-heading";
 import { adminNumber, faqs, games, products, sellers, testimonials } from "@/lib/demo-data";
-import { formatIDR } from "@/lib/invoice";
 
 export default function Home() {
   const featured = products.filter((product) => product.status === "Ready").slice(0, 8);
@@ -19,7 +18,7 @@ export default function Home() {
         <div className="mx-auto grid min-h-[calc(100vh-112px)] max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_1.05fr] lg:px-8">
           <Reveal className="relative z-10">
             <Badge tone="white" className="mb-5">
-              Escrow · Chat transaksi · Report admin
+              Escrow / Chat transaksi / Report admin
             </Badge>
             <h1 className="max-w-3xl text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">
               Jual Beli Akun Game Aman & Cepat
@@ -69,23 +68,16 @@ export default function Home() {
               <div className="space-y-4">
                 <ProductVisual game="Mobile Legends" title="Preview akun ML" imageKey={1} className="shadow-2xl" />
                 <div className="rounded-[24px] border border-white/15 bg-white/10 p-5 backdrop-blur">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-slate-300">Saldo tersedia</p>
-                      <p className="mt-1 text-2xl font-black">{formatIDR(1500000)}</p>
-                    </div>
-                    <Wallet className="h-8 w-8 text-blue-300" />
-                  </div>
-                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/15">
-                    <div className="h-full w-2/3 rounded-full bg-emerald-400" />
-                  </div>
+                  <p className="text-sm text-slate-300">Proteksi transaksi</p>
+                  <p className="mt-1 text-2xl font-black">Escrow aktif</p>
+                  <p className="mt-3 text-sm leading-6 text-slate-300">Dana ditahan sampai buyer memastikan akun sesuai deskripsi.</p>
                 </div>
               </div>
               <div className="space-y-4 pt-8">
                 <div className="rounded-[24px] border border-white/15 bg-white p-5 text-slate-950 shadow-2xl">
                   <div className="mb-4 flex items-center justify-between">
                     <Badge tone="green">Order aman</Badge>
-                    <span className="text-xs font-bold text-slate-500">ORDER-20260601-DEMO</span>
+                    <span className="text-xs font-bold text-slate-500">ORDER-20260601-A8F2</span>
                   </div>
                   <p className="font-black">Akun Valorant Platinum Region APAC</p>
                   <p className="mt-2 text-sm text-slate-500">Dana ditahan di escrow sampai buyer konfirmasi selesai.</p>
@@ -132,7 +124,7 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
             title="Produk terbaru"
-            description="Listing dummy realistis untuk akun game populer. Produk sold tidak bisa dibeli ulang."
+            description="Listing akun game populer dengan status ready/sold, seller terverifikasi, dan detail akun yang bisa dicek."
             action={
               <Link href="/marketplace" className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-black text-slate-700 hover:border-blue-200 hover:text-blue-700">
                 Lihat marketplace
@@ -187,7 +179,7 @@ export default function Home() {
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-sm font-black text-white">{seller.avatar}</div>
                   <div>
                     <p className="font-black text-slate-950">{seller.name}</p>
-                    <p className="text-sm text-slate-500">{seller.rating}/5 · {seller.sales} transaksi</p>
+                    <p className="text-sm text-slate-500">{seller.rating}/5 / {seller.sales} transaksi</p>
                   </div>
                 </div>
                 <p className="mt-4 text-sm leading-6 text-slate-600">{seller.description}</p>
@@ -219,7 +211,7 @@ export default function Home() {
           <div className="space-y-4">
             {testimonials.map((item) => (
               <div key={item.name} className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-sm leading-6 text-slate-700">“{item.text}”</p>
+                <p className="text-sm leading-6 text-slate-700">&quot;{item.text}&quot;</p>
                 <p className="mt-3 text-sm font-black text-slate-950">{item.name}</p>
               </div>
             ))}

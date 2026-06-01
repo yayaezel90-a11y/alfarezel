@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge } from "@/components/badge";
+import { AdminVisualUploadCard } from "@/components/upload-controls";
 import { DashboardShell, DataTable, MetricCard, adminNav } from "@/components/dashboard-shell";
-import { adminMenus, products, sellers } from "@/lib/demo-data";
+import { products, sellers } from "@/lib/demo-data";
 import { formatIDR } from "@/lib/invoice";
 
 export const metadata: Metadata = {
@@ -20,7 +21,7 @@ export default function AdminDashboardPage() {
   ]);
 
   return (
-    <DashboardShell title="Admin Dashboard" subtitle="Pantau GMV, top up, withdraw, report, seller review, produk pending, security flag, dan audit log." roleLabel="Super Admin" nav={adminNav}>
+    <DashboardShell title="Admin Dashboard" subtitle="Pantau GMV, top up, withdraw, report, seller review, produk pending, security flag, dan audit log." roleLabel="Super Admin" nav={adminNav()}>
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Total user" value="1.284" helper="Buyer, seller, admin aktif." tone="blue" />
         <MetricCard label="Total GMV" value={formatIDR(185430000)} helper="Semua transaksi sukses." tone="green" />
@@ -76,7 +77,7 @@ export default function AdminDashboardPage() {
       <section id="products" className="mt-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-black text-slate-950">Product Management</h2>
-          <Link href="/marketplace" className="text-sm font-black text-blue-700">Lihat marketplace</Link>
+          <Link href="/dashboard/admin/products" className="text-sm font-black text-blue-700">Kelola produk</Link>
         </div>
         <DataTable headers={["Produk", "Game", "Seller", "Status", "Harga"]} rows={productRows} />
       </section>
@@ -88,7 +89,7 @@ export default function AdminDashboardPage() {
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-sm font-black text-white">{seller.avatar}</div>
               <div>
                 <p className="font-black text-slate-950">{seller.name}</p>
-                <p className="text-sm text-slate-500">{seller.rating}/5 · {seller.sales} sales</p>
+                <p className="text-sm text-slate-500">{seller.rating}/5 / {seller.sales} sales</p>
               </div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -100,11 +101,10 @@ export default function AdminDashboardPage() {
       </section>
 
       <section className="mt-6 rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-xl font-black text-slate-950">Menu admin lengkap</h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {adminMenus.map((menu) => (
-            <div key={menu} className="rounded-2xl bg-slate-50 p-3 text-sm font-bold text-slate-700">{menu}</div>
-          ))}
+        <h2 className="text-xl font-black text-slate-950">Visual platform</h2>
+        <p className="mt-2 text-sm text-slate-500">Super admin bisa mengatur logo dan foto dashboard dari sini. Semua perubahan masuk admin log.</p>
+        <div className="mt-4">
+          <AdminVisualUploadCard />
         </div>
       </section>
 

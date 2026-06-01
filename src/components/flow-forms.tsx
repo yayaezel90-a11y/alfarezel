@@ -228,7 +228,7 @@ export function ReportForm() {
           {reasons.map((reason) => <option key={reason}>{reason}</option>)}
         </select>
       </label>
-      <Field name="orderId" label="Order terkait" placeholder="ORDER-20260601-DEMO" required={false} />
+      <Field name="orderId" label="Order terkait" placeholder="ORDER-20260601-A8F2" required={false} />
       <label className="sm:col-span-2">
         <span className="mb-2 block text-sm font-black text-slate-700">Deskripsi masalah</span>
         <textarea required name="description" rows={5} placeholder="Ceritakan masalahnya dengan jelas. Sertakan timeline dan bukti yang kamu punya." className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400" />

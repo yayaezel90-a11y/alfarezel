@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Flag } from "lucide-react";
+import { BackLink } from "@/components/back-link";
 import { ReportForm } from "@/components/flow-forms";
 
 export const metadata: Metadata = {
@@ -11,6 +12,9 @@ export default function ReportPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 pb-24 sm:px-6 lg:px-8">
       <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-5">
+          <BackLink href="/dashboard/buyer" label="Kembali ke dashboard" />
+        </div>
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-600 text-white">
             <Flag className="h-6 w-6" />

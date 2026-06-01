@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge } from "@/components/badge";
 import { DashboardShell, DataTable, MetricCard, sellerNav } from "@/components/dashboard-shell";
+import { SellerPhotoUploadCard } from "@/components/upload-controls";
 import { products } from "@/lib/demo-data";
 import { formatIDR } from "@/lib/invoice";
 
@@ -47,6 +48,14 @@ export default function SellerDashboardPage() {
             </p>
           </div>
         ))}
+      </section>
+
+      <section id="store-photo" className="mt-6 rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-xl font-black text-slate-950">Foto toko</h2>
+        <p className="mt-2 text-sm text-slate-500">Upload avatar dan banner toko supaya profil seller terlihat siap dipakai buyer.</p>
+        <div className="mt-4">
+          <SellerPhotoUploadCard />
+        </div>
       </section>
     </DashboardShell>
   );

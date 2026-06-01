@@ -32,7 +32,7 @@ export default async function SellerPage({ params }: { params: Promise<{ slug: s
                 <h1 className="text-3xl font-black">{seller.name}</h1>
                 {seller.verified ? <Verified className="h-7 w-7 fill-emerald-500 text-white" /> : null}
               </div>
-              <p className="mt-2 text-sm text-slate-300">Bergabung {seller.joined} · {seller.sales} transaksi sukses</p>
+              <p className="mt-2 text-sm text-slate-300">Bergabung {seller.joined} / {seller.sales} transaksi sukses</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Badge tone="white">Verified Seller</Badge>
                 <Badge tone="white">{seller.rating}/5 rating</Badge>
@@ -40,7 +40,7 @@ export default async function SellerPage({ params }: { params: Promise<{ slug: s
             </div>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Link href="/chat/ORDER-20260601-DEMO" className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-5 py-3 text-sm font-black text-white hover:bg-blue-500">
+            <Link href={`/chat/seller-${seller.slug}`} className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-5 py-3 text-sm font-black text-white hover:bg-blue-500">
               <MessageCircle className="h-4 w-4" />
               Chat seller
             </Link>
@@ -88,7 +88,7 @@ export default async function SellerPage({ params }: { params: Promise<{ slug: s
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               {["Seller ramah, data akun sesuai. Proses pindah bind dibantu sampai aman.", "Transaksi cepat dan admin hold bikin lebih tenang."].map((review) => (
                 <div key={review} className="rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-                  “{review}”
+                  &quot;{review}&quot;
                 </div>
               ))}
             </div>

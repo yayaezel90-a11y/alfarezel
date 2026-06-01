@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Bell, HelpCircle, Home, Menu, MessageCircle, Search, ShieldCheck, ShoppingBag, UserRound, Wallet } from "lucide-react";
+import { getCurrentUser } from "@/lib/auth";
+import { LogoutButton } from "@/components/logout-button";
 
 const navItems = [
   ["Marketplace", "/marketplace"],
@@ -10,7 +12,14 @@ const navItems = [
   ["Bantuan", "/bantuan"],
 ];
 
-export function Navbar() {
+function dashboardFor(role?: string) {
+  if (role === "ADMIN" || role === "SUPER_ADMIN") return "/dashboard/admin";
+  if (role === "SELLER") return "/dashboard/seller";
+  return "/dashboard/buyer";
+}
+
+export async function Navbar() {
+  const user = await getCurrentUser();
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
@@ -33,12 +42,23 @@ export function Navbar() {
             <Search className="h-4 w-4" />
             Cari akun
           </Link>
-          <Link href="/login" className="rounded-full px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100">
-            Login
-          </Link>
-          <Link href="/register" className="rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:scale-105 hover:bg-blue-700">
-            Register
-          </Link>
+          {user ? (
+            <>
+              <Link href={dashboardFor(user.role)} className="rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:scale-105 hover:bg-blue-700">
+                Dashboard
+              </Link>
+              <LogoutButton />
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="rounded-full px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100">
+                Masuk
+              </Link>
+              <Link href="/register" className="rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:scale-105 hover:bg-blue-700">
+                Daftar
+              </Link>
+            </>
+          )}
         </div>
         <button className="ml-auto flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-700 md:hidden" aria-label="Buka menu">
           <Menu className="h-5 w-5" />
@@ -66,9 +86,9 @@ export function Footer() {
         </div>
         <FooterColumn title="Marketplace" links={[["Belanja akun", "/marketplace"], ["Top up saldo", "/top-up"], ["Join seller", "/join-seller"], ["Voucher", "/marketplace?voucher=true"]]} />
         <FooterColumn title="Bantuan" links={[["FAQ", "/bantuan"], ["Rules marketplace", "/rules"], ["Report transaksi", "/report"], ["Kontak admin", "/bantuan#kontak"]]} />
-        <FooterColumn title="Dashboard" links={[["Buyer", "/dashboard/buyer"], ["Seller", "/dashboard/seller"], ["Admin", "/dashboard/admin"], ["Invoice", "/invoice/ORDER-20260601-DEMO"]]} />
+        <FooterColumn title="Dashboard" links={[["Buyer", "/dashboard/buyer"], ["Seller", "/dashboard/seller"], ["Admin", "/dashboard/admin"], ["Invoice", "/dashboard/buyer#orders"]]} />
       </div>
-      <div className="border-t border-white/10 px-4 py-5 text-center text-xs text-slate-500">© 2026 Alfarezel Market · alfarez.com</div>
+      <div className="border-t border-white/10 px-4 py-5 text-center text-xs text-slate-500">(c) 2026 Alfarezel Market / alfarez.com</div>
     </footer>
   );
 }
@@ -93,7 +113,7 @@ export function MobileBottomNav() {
     ["Home", "/", Home],
     ["Market", "/marketplace", ShoppingBag],
     ["Saldo", "/top-up", Wallet],
-    ["Chat", "/chat/ORDER-20260601-DEMO", MessageCircle],
+    ["Chat", "/chat/support", MessageCircle],
     ["Akun", "/dashboard/buyer", UserRound],
   ];
   return (
@@ -113,7 +133,7 @@ export function MobileBottomNav() {
 export function FloatingChatButton() {
   return (
     <Link
-      href="/chat/ORDER-20260601-DEMO"
+      href="/chat/support"
       className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-slate-950 text-white shadow-xl transition hover:scale-105 md:bottom-6"
       aria-label="Buka chat transaksi"
     >

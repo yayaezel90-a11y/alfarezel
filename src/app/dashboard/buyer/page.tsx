@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function BuyerDashboardPage() {
   const rows = [
-    ["ORDER-20260601-DEMO", "Akun Valorant Platinum Region APAC", <Badge key="status" tone="orange">Menunggu seller</Badge>, formatIDR(556200)],
+    ["ORDER-20260601-A8F2", "Akun Valorant Platinum Region APAC", <Badge key="status" tone="orange">Menunggu seller</Badge>, formatIDR(556200)],
     ["ORDER-20260528-8892", "Akun ML Mythic 45 Stars", <Badge key="status" tone="green">Selesai</Badge>, formatIDR(437750)],
     ["ORDER-20260521-7781", "Akun Roblox Item Banyak", <Badge key="status" tone="red">Report aktif</Badge>, formatIDR(319300)],
   ];
@@ -28,7 +28,7 @@ export default function BuyerDashboardPage() {
       <section id="orders" className="mt-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-black text-slate-950">Pesanan terbaru</h2>
-          <Link href="/invoice/ORDER-20260601-DEMO" className="text-sm font-black text-blue-700">Lihat invoice</Link>
+          <Link href="/invoice/ORDER-20260601-A8F2" className="text-sm font-black text-blue-700">Lihat invoice</Link>
         </div>
         <DataTable headers={["Invoice", "Produk", "Status", "Total"]} rows={rows} />
       </section>
@@ -37,8 +37,8 @@ export default function BuyerDashboardPage() {
         <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-xl font-black text-slate-950">Chat transaksi</h2>
           <p className="mt-2 text-sm text-slate-600">Seller sedang memproses pesanan. Ada kendala? Buka report biar admin bantu cek.</p>
-          <Link href="/chat/ORDER-20260601-DEMO" className="mt-4 inline-flex rounded-full bg-blue-600 px-5 py-3 text-sm font-black text-white hover:bg-blue-700">
-            Buka chat
+          <Link href="/chat/support" className="mt-4 inline-flex rounded-full bg-blue-600 px-5 py-3 text-sm font-black text-white hover:bg-blue-700">
+            Hubungi admin
           </Link>
         </div>
         <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">

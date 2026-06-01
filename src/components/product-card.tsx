@@ -40,7 +40,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <p className="text-lg font-black text-slate-950">{formatIDR(product.price)}</p>
             <div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
               <Star className="h-3.5 w-3.5 fill-orange-400 text-orange-400" />
-              {product.rating} · {product.sold} terjual
+              {product.rating} / {product.sold} terjual
             </div>
           </div>
           <Link

@@ -1,5 +1,6 @@
 import { applicationDefault, cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 
 type ServiceAccountJson = {
   project_id?: string;
@@ -47,6 +48,7 @@ export function getFirebaseApp(): App {
     return initializeApp({
       credential: cert(serviceAccount),
       projectId: serviceAccount.projectId,
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET ?? process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
   }
 
@@ -54,6 +56,7 @@ export function getFirebaseApp(): App {
     return initializeApp({
       credential: applicationDefault(),
       projectId: process.env.FIREBASE_PROJECT_ID,
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET ?? process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
   }
 
@@ -64,4 +67,8 @@ export function getFirebaseApp(): App {
 
 export function firebaseDb() {
   return getFirestore(getFirebaseApp());
+}
+
+export function firebaseBucket() {
+  return getStorage(getFirebaseApp()).bucket();
 }

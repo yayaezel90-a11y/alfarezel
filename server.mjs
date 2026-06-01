@@ -104,6 +104,9 @@ function containsSuspiciousText(body) {
 
 async function findOrderForUser(orderRef, user) {
   if (useFirebase) {
+    if (orderRef === "support" || String(orderRef).startsWith("seller-")) {
+      return findFirebaseRoomForUser(orderRef, user);
+    }
     const db = firestore();
     const byId = await db.collection("orders").doc(orderRef).get();
     const snapshot = byId.exists
@@ -127,6 +130,69 @@ async function findOrderForUser(orderRef, user) {
         : { OR: refs, AND: [{ OR: participants }] },
     include: { chat: true },
   });
+}
+
+async function findFirebaseRoomForUser(roomRef, user) {
+  const db = firestore();
+  const createdAt = new Date().toISOString();
+  if (roomRef === "support") {
+    const roomId = user.role === "ADMIN" || user.role === "SUPER_ADMIN" ? "support-admin" : `support-${user.id}`;
+    await db.collection("order_chats").doc(roomId).set(
+      {
+        id: roomId,
+        orderId: roomId,
+        roomType: "SUPPORT",
+        title: "Bantuan admin",
+        isLocked: false,
+        createdAt,
+        updatedAt: createdAt,
+      },
+      { merge: true },
+    );
+    return {
+      id: roomId,
+      invoiceId: "SUPPORT",
+      buyerId: user.id,
+      sellerId: "admin",
+      chatId: roomId,
+      status: "ACTIVE",
+      escrowStatus: "NONE",
+      chat: { id: roomId, isLocked: false },
+    };
+  }
+
+  const slug = String(roomRef).replace(/^seller-/, "");
+  const sellerSnapshot = await db.collection("seller_profiles").where("slug", "==", slug).limit(1).get();
+  const seller = sellerSnapshot.docs[0];
+  if (!seller) return null;
+  const sellerData = seller.data();
+  const sellerId = sellerData.userId || seller.id;
+  const participantKey = user.id === sellerId ? "seller" : user.id;
+  const roomId = `seller-${slug}-${participantKey}`;
+  await db.collection("order_chats").doc(roomId).set(
+    {
+      id: roomId,
+      orderId: roomId,
+      roomType: "SELLER",
+      sellerId,
+      buyerId: user.id === sellerId ? null : user.id,
+      title: sellerData.storeName || "Chat seller",
+      isLocked: false,
+      createdAt,
+      updatedAt: createdAt,
+    },
+    { merge: true },
+  );
+  return {
+    id: roomId,
+    invoiceId: roomId.toUpperCase(),
+    buyerId: user.id === sellerId ? "buyer" : user.id,
+    sellerId,
+    chatId: roomId,
+    status: "ACTIVE",
+    escrowStatus: "NONE",
+    chat: { id: roomId, isLocked: false },
+  };
 }
 
 async function createFirebaseMessage(order, user, body, attachments = []) {

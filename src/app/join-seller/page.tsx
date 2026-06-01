@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ShieldCheck, Store } from "lucide-react";
+import { BackLink } from "@/components/back-link";
 import { JoinSellerForm } from "@/components/flow-forms";
 
 export const metadata: Metadata = {
@@ -28,6 +29,9 @@ export default function JoinSellerPage() {
         </div>
       </section>
       <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-5">
+          <BackLink href="/" label="Kembali" />
+        </div>
         <h2 className="text-2xl font-black text-slate-950">Form join seller</h2>
         <p className="mt-2 text-sm text-slate-500">Deskripsi seller wajib supaya admin bisa menilai toko kamu dengan jelas.</p>
         <JoinSellerForm />
