@@ -2,6 +2,8 @@ import { z } from "zod";
 import { ok, apiError, parseJson } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseReviewProduct } from "@/lib/firebase-store";
 
 const reviewSchema = z.object({
   decision: z.enum(["approve", "reject", "hide", "feature"]),
@@ -13,6 +15,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const admin = await requireRole(["ADMIN", "SUPER_ADMIN"]);
     const { id } = await params;
     const input = await parseJson(request, reviewSchema);
+    if (isFirebaseBackend()) {
+      const product = await firebaseReviewProduct(admin, id, input);
+      return ok({ product, message: "Keputusan produk sudah disimpan." });
+    }
+
     const status =
       input.decision === "approve"
         ? "READY"

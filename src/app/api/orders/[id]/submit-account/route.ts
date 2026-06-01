@@ -3,12 +3,22 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { encryptSecret } from "@/lib/secure-data";
 import { accountDataSchema } from "@/lib/validators";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseSubmitAccountData } from "@/lib/firebase-store";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireUser();
     const { id } = await params;
     const input = await parseJson(request, accountDataSchema);
+    if (isFirebaseBackend()) {
+      await firebaseSubmitAccountData(user, id, {
+        accountData: encryptSecret(input.accountData),
+        note: input.note,
+      });
+      return ok({ message: "Data akun berhasil dikirim dengan aman." });
+    }
+
     const order = await prisma.order.findUnique({ where: { id }, include: { chat: true } });
     if (!order) throw new Error("Order tidak ditemukan.");
     if (order.sellerId !== user.id && !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {

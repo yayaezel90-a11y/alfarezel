@@ -1,6 +1,6 @@
 # Deployment Alfarezel Market
 
-Project ini sudah disiapkan untuk deploy tanpa Firebase memakai PostgreSQL + Next.js custom server + Socket.io realtime.
+Project ini sudah disiapkan untuk deploy dengan Firebase Firestore + Next.js custom server + Socket.io realtime. Mode PostgreSQL masih ada sebagai alternatif, tapi untuk jalur terbaru pakai `DATA_BACKEND=firebase`.
 
 ## Rekomendasi Platform
 
@@ -11,17 +11,19 @@ Pilih platform yang support long-running Node process dan WebSocket:
 - Fly.io
 - VPS sendiri
 
-Vercel bisa untuk halaman dan API biasa, tapi tidak cocok untuk Socket.io server sendiri. Kalau tetap mau Vercel, pakai Ably/Pusher untuk realtime.
+Vercel bisa untuk halaman dan API biasa, tapi tidak cocok untuk Socket.io server sendiri. Kalau mau full ekosistem Firebase, gunakan Firebase App Hosting atau deploy container ke Cloud Run, bukan Firebase Hosting static biasa.
 
 ## Environment Production
 
 Set variabel berikut di dashboard platform deploy:
 
 ```env
-DATABASE_URL=
+DATA_BACKEND=firebase
+NEXT_PUBLIC_DATA_BACKEND=firebase
 JWT_SECRET=
 NEXT_PUBLIC_APP_URL=
 NEXT_PUBLIC_APP_NAME="Alfarezel Market"
+FIREBASE_SERVICE_ACCOUNT_BASE64=
 ADMIN_DEFAULT_USERNAME="alfarez@gmail.com"
 ADMIN_DEFAULT_EMAIL="alfarez@gmail.com"
 ADMIN_DEFAULT_TEMP_PASSWORD=
@@ -32,24 +34,34 @@ NODE_ENV="production"
 
 Catatan:
 
-- `DATABASE_URL` pakai PostgreSQL production, misalnya Railway Postgres, Render Postgres, Neon, Supabase Postgres, atau VPS Postgres.
+- `FIREBASE_SERVICE_ACCOUNT_BASE64` adalah service account JSON Firebase yang di-base64. Alternatifnya pakai `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, dan `FIREBASE_PRIVATE_KEY`.
 - `JWT_SECRET` wajib panjang dan random.
 - `ADMIN_DEFAULT_TEMP_PASSWORD` hanya dipakai saat seed admin awal. Setelah login pertama, admin wajib ganti password.
 - Jangan tampilkan credential admin di halaman publik.
+
+## Firebase yang Perlu Dinyalakan
+
+Di Firebase Console:
+
+1. Buat project Firebase.
+2. Build > Firestore Database > Create database.
+3. Pilih production mode.
+4. Project settings > Service accounts > Generate new private key.
+5. Jadikan file JSON service account ke base64, lalu isi `FIREBASE_SERVICE_ACCOUNT_BASE64`.
+
+Firebase Authentication tidak wajib untuk versi ini karena auth memakai JWT session + bcrypt hash di Firestore. Firebase Storage opsional untuk upload bukti transfer, screenshot produk, avatar, dan lampiran chat.
 
 ## Deploy Railway
 
 1. Push project ke GitHub.
 2. Buat Railway project.
-3. Tambahkan PostgreSQL plugin.
+3. Set environment variable Firebase.
 4. Deploy repo ini.
-5. Set environment variable di Railway.
-6. Railway akan membaca `railway.json` dan `Dockerfile`.
-7. Setelah deploy pertama berhasil, jalankan command sekali dari Railway shell:
+5. Railway akan membaca `railway.json` dan `Dockerfile`.
+6. Setelah deploy pertama berhasil, jalankan command sekali dari Railway shell:
 
 ```bash
-npm run db:push
-npm run db:seed
+npm run firebase:seed
 ```
 
 Start command:
@@ -73,21 +85,19 @@ DB healthcheck:
 ## Deploy Render
 
 1. Push project ke GitHub.
-2. Buat PostgreSQL database di Render.
-3. Buat Web Service dari repo ini.
+2. Buat Web Service dari repo ini.
 4. Pilih Docker environment.
-5. Set environment variable.
+5. Set environment variable Firebase.
 6. Render bisa membaca `render.yaml`.
 7. Setelah deploy pertama, buka Render shell dan jalankan:
 
 ```bash
-npm run db:push
-npm run db:seed
+npm run firebase:seed
 ```
 
 ## Realtime Chat
 
-Realtime chat memakai Socket.io di `server.mjs`.
+Realtime chat memakai Socket.io di `server.mjs`. Saat `DATA_BACKEND=firebase`, user, order, dan pesan chat dibaca/disimpan ke Firestore.
 
 Client chat memakai:
 
@@ -101,7 +111,7 @@ Event:
 - `chat:send`
 - `chat:message`
 
-Pesan tetap disimpan ke PostgreSQL melalui Prisma, jadi realtime bukan cuma memory sementara.
+Pesan tetap disimpan ke Firestore, jadi realtime bukan cuma memory sementara.
 
 ## Upload File
 
@@ -109,17 +119,14 @@ Upload saat ini sudah cloud-ready di level form/API path, tapi belum memakai pro
 
 - Cloudinary
 - S3/R2
-- Supabase Storage
-
-Firebase tidak wajib.
+- Firebase Storage
 
 ## Checklist Sebelum Publik
 
 - Jalankan `npm run build`.
 - Pastikan `/api/health` mengembalikan `200`.
 - Pastikan `/api/health/db` mengembalikan `200`.
-- Jalankan `npm run db:push`.
-- Jalankan `npm run db:seed`.
+- Jalankan `npm run firebase:seed`.
 - Login admin dengan email dari `.env`.
 - Ganti password admin pertama kali.
 - Tes top up request.

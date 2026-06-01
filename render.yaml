@@ -10,9 +10,13 @@ services:
         value: production
       - key: NEXT_PUBLIC_APP_NAME
         value: Alfarezel Market
+      - key: DATA_BACKEND
+        value: firebase
+      - key: NEXT_PUBLIC_DATA_BACKEND
+        value: firebase
       - key: NEXT_PUBLIC_APP_URL
         sync: false
-      - key: DATABASE_URL
+      - key: FIREBASE_SERVICE_ACCOUNT_BASE64
         sync: false
       - key: JWT_SECRET
         generateValue: true

@@ -2,12 +2,19 @@ import { ok, apiError, parseJson } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { topupDecisionSchema } from "@/lib/validators";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseRejectTopup } from "@/lib/firebase-store";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const admin = await requireRole(["ADMIN", "SUPER_ADMIN"]);
     const { id } = await params;
     const input = await parseJson(request, topupDecisionSchema);
+    if (isFirebaseBackend()) {
+      await firebaseRejectTopup(id, admin, input.adminNote);
+      return ok({ message: "Top up ditolak dengan catatan admin." });
+    }
+
     const topup = await prisma.topupRequest.update({
       where: { id },
       data: {

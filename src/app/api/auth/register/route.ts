@@ -3,10 +3,18 @@ import { ok, apiError, parseJson } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { registerSchema } from "@/lib/validators";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseRegisterUser } from "@/lib/firebase-store";
 
 export async function POST(request: Request) {
   try {
     const input = await parseJson(request, registerSchema);
+    if (isFirebaseBackend()) {
+      const user = await firebaseRegisterUser(input);
+      await createSession(user);
+      return ok({ user, message: "Akun berhasil dibuat. Selamat datang di Alfarezel Market." }, 201);
+    }
+
     const passwordHash = await hashPassword(input.password);
 
     const exists = await prisma.user.findFirst({

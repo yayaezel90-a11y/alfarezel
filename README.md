@@ -1,15 +1,15 @@
 # Alfarezel Market
 
-Marketplace jual beli akun game untuk user Indonesia. Project ini memakai Next.js App Router, Tailwind CSS, Prisma PostgreSQL, JWT cookie session, bcrypt password hashing, Zod validation, wallet ledger, escrow/order hold, top up manual, withdraw seller, chat transaksi, report/dispute, review, wishlist, dan admin panel.
+Marketplace jual beli akun game untuk user Indonesia. Project ini memakai Next.js App Router, Tailwind CSS, Firebase Firestore mode, JWT cookie session, bcrypt password hashing, Zod validation, wallet ledger, escrow/order hold, top up manual, withdraw seller, chat transaksi, report/dispute, review, wishlist, dan admin panel. Mode PostgreSQL/Prisma lama tetap tersedia sebagai alternatif.
 
 ## Tech Stack
 
 - Frontend: Next.js, React, Tailwind CSS, Framer Motion, lucide-react
 - Backend: Next API routes
-- Database: PostgreSQL via Prisma
+- Database: Firebase Firestore (`DATA_BACKEND=firebase`) atau PostgreSQL via Prisma
 - Auth: JWT session cookie httpOnly
 - Security: bcrypt password hashing, role guard, AES-GCM untuk data akun order, audit log
-- Realtime-ready: struktur chat transaksi dan Socket.io dependency tersedia untuk upgrade realtime
+- Realtime: Socket.io custom server dengan pesan disimpan ke Firestore saat mode Firebase aktif
 
 ## Setup Lokal
 
@@ -19,17 +19,26 @@ Marketplace jual beli akun game untuk user Indonesia. Project ini memakai Next.j
 cp .env.example .env
 ```
 
-2. Jalankan PostgreSQL:
+2. Isi credential Firebase di `.env`.
 
-```bash
-docker compose up -d
+Minimal aktifkan `DATA_BACKEND=firebase`, lalu isi salah satu:
+
+```env
+FIREBASE_SERVICE_ACCOUNT_BASE64="base64-dari-service-account-json"
 ```
 
-3. Push schema dan seed data:
+atau:
+
+```env
+FIREBASE_PROJECT_ID="project-id"
+FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxx@project-id.iam.gserviceaccount.com"
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+3. Seed admin, game, produk dummy, fee, seller, dan wallet ke Firestore:
 
 ```bash
-npm run db:push
-npm run db:seed
+npm run firebase:seed
 ```
 
 4. Jalankan website:
@@ -46,9 +55,11 @@ Untuk realtime Socket.io lokal:
 npm run dev:realtime
 ```
 
+Kalau `DATA_BACKEND=firebase`, kamu tidak perlu menjalankan Docker/PostgreSQL untuk login lokal.
+
 ## Admin Awal
 
-Seed membuat admin awal dari variabel `ADMIN_DEFAULT_USERNAME`, `ADMIN_DEFAULT_EMAIL`, dan `ADMIN_DEFAULT_TEMP_PASSWORD` di file `.env`. Password disimpan sebagai hash bcrypt, bukan plain text di database. Field `mustChangePassword` dibuat `true` agar admin mengganti password setelah login pertama.
+Seed Firebase membuat admin awal dari variabel `ADMIN_DEFAULT_USERNAME`, `ADMIN_DEFAULT_EMAIL`, dan `ADMIN_DEFAULT_TEMP_PASSWORD` di file `.env`. Password disimpan sebagai hash bcrypt di Firestore, bukan plain text. Field `mustChangePassword` dibuat `true` agar admin mengganti password setelah login pertama.
 
 ## Struktur Folder
 
@@ -56,6 +67,8 @@ Seed membuat admin awal dari variabel `ADMIN_DEFAULT_USERNAME`, `ADMIN_DEFAULT_E
 prisma/
   schema.prisma          Database schema lengkap
   seed.ts                Seed admin, fee, game, seller, buyer, produk dummy
+scripts/
+  seed-firebase.ts       Seed admin dan dummy data ke Firebase Firestore
 src/app/
   api/                   Backend API auth, produk, topup, order, chat, report, withdraw, admin
   marketplace/           Marketplace product listing
@@ -69,7 +82,7 @@ src/app/
   invoice/[id]/          Invoice detail
   bantuan/ rules/        Bantuan dan rules marketplace
 src/components/          UI reusable marketplace dan dashboard
-src/lib/                 Auth, Prisma, invoice, wallet ledger, validation, data marketplace
+src/lib/                 Auth, Firebase, Prisma, invoice, wallet ledger, validation, data marketplace
 ```
 
 ## API Utama
@@ -107,7 +120,7 @@ src/lib/                 Auth, Prisma, invoice, wallet ledger, validation, data 
 ## Catatan Produksi
 
 - Ganti `JWT_SECRET` sebelum deploy.
-- Gunakan object storage untuk upload avatar, bukti transfer, screenshot produk, dan lampiran chat.
+- Untuk upload produksi, aktifkan Firebase Storage atau Cloudinary/S3/R2.
 - Chat realtime penuh berjalan lewat custom server Socket.io di `server.mjs`; deploy ke platform yang support WebSocket seperti Railway, Render, Fly.io, atau VPS.
 - Tambahkan email provider untuk forgot/reset password produksi.
 - Aktifkan rate limit login, CSRF hardening, dan backup database berkala.

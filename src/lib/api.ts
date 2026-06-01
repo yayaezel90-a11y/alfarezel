@@ -41,6 +41,15 @@ export function apiError(error: unknown) {
         { status: 503 },
       );
     }
+    if (message.includes("firebase belum dikonfigurasi") || message.includes("could not load the default credentials")) {
+      return NextResponse.json(
+        {
+          error: "Firebase belum dikonfigurasi. Isi service account Firebase di .env lalu jalankan seed Firebase.",
+          setup: ["DATA_BACKEND=firebase", "FIREBASE_SERVICE_ACCOUNT_BASE64=...", "npm run firebase:seed"],
+        },
+        { status: 503 },
+      );
+    }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 

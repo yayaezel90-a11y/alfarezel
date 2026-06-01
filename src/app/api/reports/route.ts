@@ -2,10 +2,17 @@ import { ok, apiError, parseJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { reportSchema } from "@/lib/validators";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseCreateReport, firebaseListReports } from "@/lib/firebase-store";
 
 export async function GET() {
   try {
     const user = await requireUser();
+    if (isFirebaseBackend()) {
+      const reports = await firebaseListReports(user);
+      return ok({ reports });
+    }
+
     const reports = await prisma.report.findMany({
       where: ["ADMIN", "SUPER_ADMIN"].includes(user.role)
         ? undefined
@@ -30,6 +37,11 @@ export async function POST(request: Request) {
   try {
     const user = await requireUser();
     const input = await parseJson(request, reportSchema);
+    if (isFirebaseBackend()) {
+      const report = await firebaseCreateReport(user, input);
+      return ok({ report, message: "Report berhasil dikirim. Admin akan bantu cek." }, 201);
+    }
+
     const order = input.orderId
       ? await prisma.order.findFirst({ where: { OR: [{ id: input.orderId }, { invoiceId: input.orderId }] }, include: { chat: true } })
       : null;

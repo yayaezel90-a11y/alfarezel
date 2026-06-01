@@ -3,10 +3,17 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { orderSchema } from "@/lib/validators";
 import { createOrderWithEscrow } from "@/lib/wallet";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseCreateOrderWithEscrow, firebaseListOrders } from "@/lib/firebase-store";
 
 export async function GET() {
   try {
     const user = await requireUser();
+    if (isFirebaseBackend()) {
+      const orders = await firebaseListOrders(user);
+      return ok({ orders });
+    }
+
     const orders = await prisma.order.findMany({
       where: ["ADMIN", "SUPER_ADMIN"].includes(user.role)
         ? undefined
@@ -31,6 +38,11 @@ export async function POST(request: Request) {
   try {
     const user = await requireUser();
     const input = await parseJson(request, orderSchema);
+    if (isFirebaseBackend()) {
+      const order = await firebaseCreateOrderWithEscrow(user, { productId: input.productId, productSlug: input.productSlug });
+      return ok({ order, message: "Pesanan kamu lagi diproses." }, 201);
+    }
+
     const order = await prisma.$transaction((tx) =>
       createOrderWithEscrow(tx, { buyerId: user.id, productId: input.productId, productSlug: input.productSlug }),
     );

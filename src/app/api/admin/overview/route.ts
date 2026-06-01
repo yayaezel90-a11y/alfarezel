@@ -1,10 +1,33 @@
 import { ok, apiError } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseAdminOverview } from "@/lib/firebase-store";
 
 export async function GET() {
   try {
     await requireRole(["ADMIN", "SUPER_ADMIN"]);
+    if (isFirebaseBackend()) {
+      const overview = await firebaseAdminOverview();
+      return ok({
+        overview: {
+          totalUser: overview.totalUsers,
+          totalBuyer: overview.totalBuyers,
+          totalSeller: overview.totalSellers,
+          sellerPending: overview.sellerPending,
+          totalProduct: overview.totalProducts,
+          pendingProduct: overview.productsPending,
+          soldProduct: overview.productsSold,
+          totalOrder: overview.totalOrders,
+          totalGmv: overview.gmv,
+          totalTopup: overview.totalTopup,
+          totalFeeTopup: overview.totalTopupFee,
+          totalWithdraw: overview.totalWithdraw,
+          activeReport: overview.activeReports,
+        },
+      });
+    }
+
     const [
       totalUser,
       totalBuyer,

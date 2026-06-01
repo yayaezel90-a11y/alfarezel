@@ -2,6 +2,8 @@ import { cookies, headers } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import type { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseGetSessionUser } from "@/lib/firebase-store";
 
 const cookieName = "alfarezel_session";
 const encoder = new TextEncoder();
@@ -57,17 +59,19 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
     const id = verified.payload.sub;
     if (!id) return null;
 
-    const user = await prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        role: true,
-        status: true,
-        mustChangePassword: true,
-      },
-    });
+    const user = isFirebaseBackend()
+      ? await firebaseGetSessionUser(id)
+      : await prisma.user.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            role: true,
+            status: true,
+            mustChangePassword: true,
+          },
+        });
     if (!user || user.status !== "ACTIVE") return null;
     return user;
   } catch {

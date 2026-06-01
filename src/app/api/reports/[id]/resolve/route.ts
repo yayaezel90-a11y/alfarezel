@@ -3,6 +3,8 @@ import { ok, apiError, parseJson } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { refundBuyer, releaseEscrow } from "@/lib/wallet";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseResolveReport } from "@/lib/firebase-store";
 
 const resolveSchema = z.object({
   decision: z.enum(["refund_buyer", "release_seller", "close", "request_buyer_evidence", "request_seller_evidence"]),
@@ -14,6 +16,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const admin = await requireRole(["ADMIN", "SUPER_ADMIN"]);
     const { id } = await params;
     const input = await parseJson(request, resolveSchema);
+    if (isFirebaseBackend()) {
+      await firebaseResolveReport(admin, id, {
+        resolution: input.resolution,
+        decision:
+          input.decision === "refund_buyer"
+            ? "REFUND_BUYER"
+            : input.decision === "release_seller"
+              ? "RELEASE_SELLER"
+              : "CLOSE_ONLY",
+      });
+      return ok({ message: "Keputusan report sudah disimpan." });
+    }
+
     const report = await prisma.report.findUnique({ where: { id } });
     if (!report) throw new Error("Report tidak ditemukan.");
 

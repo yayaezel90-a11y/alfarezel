@@ -2,11 +2,18 @@ import { ok, apiError, parseJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { reviewSchema } from "@/lib/validators";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseCreateReview } from "@/lib/firebase-store";
 
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
     const input = await parseJson(request, reviewSchema);
+    if (isFirebaseBackend()) {
+      const review = await firebaseCreateReview(user, input);
+      return ok({ review, message: "Review berhasil dikirim. Makasih sudah bantu buyer lain." }, 201);
+    }
+
     const order = await prisma.order.findUnique({ where: { id: input.orderId } });
     if (!order) throw new Error("Order tidak ditemukan.");
     if (order.buyerId !== user.id) throw new Response("Forbidden", { status: 403 });

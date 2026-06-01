@@ -3,11 +3,18 @@ import { requireUser } from "@/lib/auth";
 import { slugify } from "@/lib/invoice";
 import { prisma } from "@/lib/prisma";
 import { sellerApplicationSchema } from "@/lib/validators";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseApplySeller } from "@/lib/firebase-store";
 
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
     const input = await parseJson(request, sellerApplicationSchema);
+    if (isFirebaseBackend()) {
+      const profile = await firebaseApplySeller(user, input);
+      return ok({ profile, message: "Pengajuan seller berhasil dikirim. Tunggu admin review ya." }, 201);
+    }
+
     const existing = await prisma.sellerProfile.findUnique({ where: { userId: user.id } });
     if (existing && existing.status !== "REJECTED") {
       throw new Error("Pengajuan seller kamu masih aktif atau sudah diterima.");

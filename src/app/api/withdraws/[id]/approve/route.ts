@@ -3,6 +3,8 @@ import { ok, apiError, parseJson } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createWalletLog } from "@/lib/wallet";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseApproveWithdraw } from "@/lib/firebase-store";
 
 const approveSchema = z.object({
   proofImage: z.string().optional(),
@@ -14,6 +16,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const admin = await requireRole(["ADMIN", "SUPER_ADMIN"]);
     const { id } = await params;
     const input = await parseJson(request, approveSchema);
+    if (isFirebaseBackend()) {
+      await firebaseApproveWithdraw(id, admin, input.adminNote, input.proofImage);
+      return ok({ message: "Withdraw berhasil di-approve." });
+    }
+
     const withdraw = await prisma.$transaction(async (tx) => {
       const wd = await tx.withdrawRequest.findUnique({ where: { id } });
       if (!wd) throw new Error("Request withdraw tidak ditemukan.");

@@ -3,9 +3,17 @@ import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/invoice";
 import { productSchema } from "@/lib/validators";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseCreateProduct, firebaseListProducts } from "@/lib/firebase-store";
 
 export async function GET(request: Request) {
   try {
+    if (isFirebaseBackend()) {
+      const url = new URL(request.url);
+      const products = await firebaseListProducts(url.searchParams);
+      return ok({ products });
+    }
+
     const url = new URL(request.url);
     const query = url.searchParams.get("q") ?? undefined;
     const game = url.searchParams.get("game") ?? undefined;
@@ -52,6 +60,20 @@ export async function POST(request: Request) {
   try {
     const user = await requireRole(["SELLER", "ADMIN", "SUPER_ADMIN"]);
     const input = await parseJson(request, productSchema);
+    if (isFirebaseBackend()) {
+      const product = await firebaseCreateProduct(user, input);
+      return ok(
+        {
+          product,
+          message:
+            product.status === "PENDING_REVIEW"
+              ? "Produk berhasil dikirim. Tunggu admin review sebelum tayang."
+              : "Produk berhasil tayang.",
+        },
+        201,
+      );
+    }
+
     const game = await prisma.game.findFirst({
       where: input.gameId ? { id: input.gameId } : { slug: input.gameSlug },
     });

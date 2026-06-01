@@ -2,6 +2,8 @@ import { ok, apiError, parseJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseArchiveProduct, firebaseGetProduct, firebaseUpdateProduct } from "@/lib/firebase-store";
 
 const productUpdateSchema = z.object({
   title: z.string().min(10).optional(),
@@ -18,6 +20,12 @@ const productUpdateSchema = z.object({
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    if (isFirebaseBackend()) {
+      const product = await firebaseGetProduct(id);
+      if (!product) throw new Error("Produk tidak ditemukan.");
+      return ok({ product });
+    }
+
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
@@ -40,6 +48,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const user = await requireUser();
     const { id } = await params;
     const input = await parseJson(request, productUpdateSchema);
+    if (isFirebaseBackend()) {
+      const updated = await firebaseUpdateProduct(user, id, input);
+      return ok({ product: updated, message: "Produk berhasil diperbarui." });
+    }
+
     const product = await prisma.product.findUnique({ where: { id } });
     if (!product) throw new Error("Produk tidak ditemukan.");
     if (product.sellerId !== user.id && !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
@@ -70,6 +83,11 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   try {
     const user = await requireUser();
     const { id } = await params;
+    if (isFirebaseBackend()) {
+      await firebaseArchiveProduct(user, id);
+      return ok({ message: "Produk berhasil diarsipkan." });
+    }
+
     const product = await prisma.product.findUnique({ where: { id } });
     if (!product) throw new Error("Produk tidak ditemukan.");
     if (product.sellerId !== user.id && !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {

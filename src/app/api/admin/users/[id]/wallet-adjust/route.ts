@@ -3,6 +3,8 @@ import { ok, apiError, parseJson } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createWalletLog } from "@/lib/wallet";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseAdjustWallet } from "@/lib/firebase-store";
 
 const adjustSchema = z.object({
   amount: z.coerce.number().int(),
@@ -14,6 +16,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const admin = await requireRole(["ADMIN", "SUPER_ADMIN"]);
     const { id } = await params;
     const input = await parseJson(request, adjustSchema);
+    if (isFirebaseBackend()) {
+      const wallet = await firebaseAdjustWallet(admin, id, input.amount, input.reason);
+      return ok({ wallet, message: "Saldo user berhasil disesuaikan dengan audit log." });
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       const wallet = await tx.wallet.upsert({
         where: { userId: id },

@@ -2,6 +2,8 @@ import { ok, apiError, parseJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { chatMessageSchema } from "@/lib/validators";
+import { isFirebaseBackend } from "@/lib/firebase-admin";
+import { firebaseCreateChatMessage, firebaseListChatMessages } from "@/lib/firebase-store";
 
 const suspiciousWords = ["transfer langsung", "di luar web", "wa aja bayar langsung", "bayar langsung", "luar platform"];
 
@@ -14,6 +16,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ ord
   try {
     const user = await requireUser();
     const { orderId } = await params;
+    if (isFirebaseBackend()) {
+      const messages = await firebaseListChatMessages(orderId, user);
+      return ok({ messages });
+    }
+
     const order = await prisma.order.findFirst({
       where: { OR: [{ id: orderId }, { invoiceId: orderId }] },
       include: { chat: true },
@@ -39,6 +46,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
     const user = await requireUser();
     const { orderId } = await params;
     const input = await parseJson(request, chatMessageSchema);
+    if (isFirebaseBackend()) {
+      const message = await firebaseCreateChatMessage(orderId, user, input);
+      return ok({ message, warning: message.warning });
+    }
+
     const order = await prisma.order.findFirst({
       where: { OR: [{ id: orderId }, { invoiceId: orderId }] },
       include: { chat: true },
